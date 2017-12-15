@@ -246,7 +246,7 @@ static void draw(void) {
     gl4duTranslatef(rt[0], rt[1], rt[2]);                           // reverse Translation
     gl4duScalef(rs[0], rs[1], MIN(rs[0], rs[1]));                   // Reverse scale
    
-    gl4duTranslatef(lumPos[0],lumPos[1],lumPos[3]);
+    //gl4duTranslatef(lumPos[0],lumPos[1],lumPos[3]);//change la positon de sphere, mais la lumière
     
     gl4duSendMatrices();                                            // Envoyer les matrices
     gl4duPopMatrix();                                               // Restaurer modelview
