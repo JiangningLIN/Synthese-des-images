@@ -27,13 +27,14 @@ using namespace std;
  */
 static void init(void);
 static void resize(int w, int h);
+static void keydown(int keycode);
 static void draw(void);
 static void quit(void);
 
 //!\brief identifiant de la sphere et du quad
 static GLuint _sphere = 0, _quad = 0;
 //!\brief translation de la sphere
-static GLfloat _t[2] = {1000, 1000};
+//static GLfloat _t[2] = {1000, 1000};
 //---------------------------------------------------------------------- end sphere
 
 
@@ -69,6 +70,8 @@ int main(int argc, char ** argv) {
   }
   atexit(quit);
   init();
+  gl4duwResizeFunc(resize);
+  gl4duwKeyDownFunc(keydown);
   gl4duwDisplayFunc(draw);
   gl4duwMainLoop();
   return 0;
@@ -128,23 +131,21 @@ static void draw(void) {
   face_cc->detectMultiScale(gsi, faces, 1.3, 5);
   vector<Rect>::iterator fc = faces.begin();
   int rw[NB_CHAPEAU];   // reverse taille X
-  int rh[NB_CHAPEAU];   // reverse taille Y
+ // int rh[NB_CHAPEAU];   // reverse taille Y
   int lx[NB_CHAPEAU];   // reverse Position Y
   int ly[NB_CHAPEAU];   // reverse Position Y
   int nb_person = 0;
   for (int i = 0; i < NB_CHAPEAU; i++) {
       rw[i] = -1;
-      rh[i] = -1;
+   //   rh[i] = -1;
       lx[i] = -1;
       ly[i] = -1;
   }
-  /*int l2x = -1;  // reverse X
-  int l2y = -1;  // reverse Y
-  nb_person = 0;*/
+  
   for (; fc != faces.end(); fc++) {
       if( rw[nb_person] < 0 ) {
           rw[nb_person] = (*fc).br().x - (*fc).tl().x;
-          rh[nb_person] = (*fc).br().y - (*fc).tl().y;
+         // rh[nb_person] = (*fc).br().y - (*fc).tl().y;
           lx[nb_person] = ((*fc).br()).x;
           ly[nb_person] = ((*fc).br()).y;
           nb_person++;
@@ -196,7 +197,6 @@ static void draw(void) {
 
 
   for (int i = 0; i < nb_person; i++) {
-    printf("nb_person %d", i);
     // Sphère
     // -----------------------------------------
     
@@ -206,7 +206,7 @@ static void draw(void) {
     GLfloat dt = 0.0;
     GLfloat lumPos[4];
     Uint32 t;
-    dt = ((t = SDL_GetTicks()) - t0) / 2000.0; //1000.0
+    dt = ((t = SDL_GetTicks()) - t0) / 1000.0; //1000.0
     t0 = t;
     /*****************************/
     
@@ -221,17 +221,16 @@ static void draw(void) {
     GLfloat v[4] = { xg, yg, zg, 1.0 };                             // point une fois projeté
     GLfloat w[4] = { fm, fm, fm, 1.0 };                             //  fm : formule magique
     GLfloat rt[4];                                                  // reverse-translation  , Projection inverse
-    GLfloat rs[4];    
-                                              // reverse-scale
+    GLfloat rs[4];                                                  // reverse-scale
     gl4duBindMatrix("projectionMatrix");                            // ???
     m = gl4duGetMatrixData();                                       // ???
     memcpy(Pp, m, sizeof Pp);                                       // ???
     MMAT4INVERSE(Pp);                                               // Calcul de la Matrice vecteur 4 inverse
-    
+   
     glUseProgram(_pId);
-    gl4duRotatef(a0, 0, 1, 0);
+    gl4duRotatef(a0, 0, 0, 1);
     glUniform4fv(glGetUniformLocation(_pId, "lumPos"), 1, lumPos);
-   //********lumière*********** 
+  //********lumière*********** 
     MMAT4XVEC4(lumPos,Pp, _lumPos0);
     MVEC4WEIGHT(lumPos);
     //*******end lumière*****
@@ -241,20 +240,40 @@ static void draw(void) {
     MMAT4XVEC4( rs, Pp, w);                                         // Calcul de la Matrice vecteur 4
     MVEC4WEIGHT(rs);                                                // Calcul de la Matrice vecteur 4 weight
     gl4duBindMatrix("modelViewMatrix");                             // Sauver modelview
-    gl4duPushMatrix();                                              // Sauver modelview
+    gl4duPushMatrix();  
     gl4duLoadIdentityf();                                           // Met la matrice dans idenité
     gl4duTranslatef(rt[0], rt[1], rt[2]);                           // reverse Translation
     gl4duScalef(rs[0], rs[1], MIN(rs[0], rs[1]));                   // Reverse scale
-   
-    //gl4duTranslatef(lumPos[0],lumPos[1],lumPos[3]);//change la positon de sphere, mais la lumière
+    
+   // gl4duTranslatef(lumPos[0],lumPos[1],lumPos[3]);
     
     gl4duSendMatrices();                                            // Envoyer les matrices
     gl4duPopMatrix();                                               // Restaurer modelview
     gl4dgDraw(_sphere);                                             // Dessin de la sphere
     // ----------------------------------------- end Sphere 1
-     a0 += 360.0 * dt / (600.0 /* * 60.0 */);
+    a0 += 360.0 * dt / (600.0 /* * 60.0 )*/);
+     
   }
 }
+
+static void keydown(int keycode) {
+  GLint v[2];
+  switch(keycode) {
+  case 'w':
+    glGetIntegerv(GL_POLYGON_MODE, v);
+    if(v[0] == GL_FILL)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    break;
+  case SDLK_ESCAPE:
+  case 'q':
+    exit(0);
+  default:
+    break;
+  }
+}
+
 
 /*!\brief Cette fonction est appelee au moment de sortir du programme
  *  (atexit), elle libere la fenetre SDL \ref _win et le contexte OpenGL \ref _oglContext.
