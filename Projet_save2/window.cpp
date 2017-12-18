@@ -48,7 +48,7 @@ static GLuint _tId = 0;
 static VideoCapture * _cap = NULL;
 //---------------lumière-------------------------------------------
 /*!\brief position de la lumière relativement à la sphère éclairée */
-static GLfloat _lumPos0[4] = {-0.5, 0.5, 1.5, 1.0};
+static GLfloat _lumPos0[4] = {0, -1, 0, 1.0};
 
 //-------------------------end lumière-----------------------------
 CascadeClassifier * face_cc;
@@ -228,22 +228,23 @@ static void draw(void) {
     MMAT4INVERSE(Pp);                                               // Calcul de la Matrice vecteur 4 inverse
    
     glUseProgram(_pId);
-    gl4duRotatef(a0, 0, 0, 1);
-    glUniform4fv(glGetUniformLocation(_pId, "lumPos"), 1, lumPos);
-  //********lumière*********** 
-    MMAT4XVEC4(lumPos,Pp, _lumPos0);
-    MVEC4WEIGHT(lumPos);
-    //*******end lumière*****
    
     MMAT4XVEC4( rt, Pp, v);                                         // Calcul de la Matrice vecteur 4 en X
     MVEC4WEIGHT(rt);                                                // Calcul de la Matrice vecteur 4 weight
     MMAT4XVEC4( rs, Pp, w);                                         // Calcul de la Matrice vecteur 4
     MVEC4WEIGHT(rs);                                                // Calcul de la Matrice vecteur 4 weight
+  //********lumière*********** 
+    //MMAT4XVEC4(lumPos,Pp, _lumPos0);
+    //MVEC4WEIGHT(lumPos);
+    //*******end lumière*****
+    glUniform4fv(glGetUniformLocation(_pId, "lumPos"), 1, _lumPos0);
     gl4duBindMatrix("modelViewMatrix");                             // Sauver modelview
     gl4duPushMatrix();  
     gl4duLoadIdentityf();                                           // Met la matrice dans idenité
     gl4duTranslatef(rt[0], rt[1], rt[2]);                           // reverse Translation
+    gl4duRotatef(a0, 0, 1, 0);
     gl4duScalef(rs[0], rs[1], MIN(rs[0], rs[1]));                   // Reverse scale
+    //gl4duScalef(1, 0.1f, 0.1f);                   // Reverse scale
     
    // gl4duTranslatef(lumPos[0],lumPos[1],lumPos[3]);
     
@@ -251,7 +252,7 @@ static void draw(void) {
     gl4duPopMatrix();                                               // Restaurer modelview
     gl4dgDraw(_sphere);                                             // Dessin de la sphere
     // ----------------------------------------- end Sphere 1
-    a0 += 360.0 * dt / (600.0 /* * 60.0 )*/);
+    a0 += 360.0 * dt / (1.0 /* * 60.0 )*/);
      
   }
 }
